@@ -22,13 +22,16 @@ http://www.acmesystems.it/DAISY-2
 #include <linux/device.h>
 #include <linux/kdev_t.h>
 #include <linux/gpio.h>
+#include <linux/gpio/driver.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Antonio Galea");
 MODULE_DESCRIPTION("Driver for kernel-generated PWM signals");
 
-static struct hrtimer hr_timer;
+#define ARCH_NR_GPIOS 256
 
+static struct hrtimer hr_timer;
+enum hrtimer_restart soft_pwm_hrtimer_callback(struct hrtimer *timer);
 /* pwm_desc
  *
  * This structure maintains the information regarding a single PWM signal: its
@@ -150,7 +153,7 @@ static const struct attribute_group soft_pwm_dev_attr_group = {
 /* Export a GPIO pin to sysfs, and claim it for PWM usage.
  * See the equivalent function in drivers/gpio/gpiolib.c
  */
-static ssize_t export_store(struct class *class, struct class_attribute *attr,
+static ssize_t export_store(const struct class *class, const struct class_attribute *attr,
 	const char *buf, size_t len){
 	long gpio;
 	int  status;
@@ -180,7 +183,7 @@ done:
 /* Unexport a PWM GPIO pin from sysfs, and unreclaim it.
  * See the equivalent function in drivers/gpio/gpiolib.c
  */
-static ssize_t unexport_store(struct class *class, struct class_attribute *attr,
+static ssize_t unexport_store(const struct class *class, const struct class_attribute *attr,
 	const char *buf, size_t len)
 {
 	long gpio;
@@ -221,7 +224,7 @@ static const struct attribute_group *soft_pwm_class_groups[] = {
 
 static struct class soft_pwm_class = {
 	.name = "soft_pwm",
-	.owner = THIS_MODULE,
+	/*.owner = THIS_MODULE,*/
 	.class_groups = soft_pwm_class_groups,
 };
 
