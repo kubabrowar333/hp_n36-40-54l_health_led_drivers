@@ -30,9 +30,11 @@
  */
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/seq_file.h>
 #include <linux/io.h>
 #include <linux/ioport.h>
 #include <linux/gpio.h>
+#include <linux/gpio/driver.h>
 #include <linux/pci.h>
 #include <linux/spinlock.h>
 #include <linux/acpi.h>
@@ -167,7 +169,7 @@ static int amd_sb8xx_gpio_get_direction(struct gpio_chip *chip,
 
  temp = ioread8(agp->gpio + offset);
 
- return (temp & GPIO_OUT_EN_B) ? GPIOF_DIR_IN : GPIOF_DIR_OUT;
+ return (temp & GPIO_OUT_EN_B) ? GPIOF_IN : GPIOF_OUT_INIT_LOW;
 }
 
 static int amd_sb8xx_gpio_dirout(struct gpio_chip *chip, unsigned offset,
@@ -180,7 +182,7 @@ static int amd_sb8xx_gpio_dirout(struct gpio_chip *chip, unsigned offset,
 
  // HACK - Some pins already seem to be set to output
  // but aren't marked as safe for being set to output...
- if (amd_sb8xx_gpio_get_direction(chip, offset) == GPIOF_DIR_OUT) {
+ if (amd_sb8xx_gpio_get_direction(chip, offset) == GPIOF_OUT_INIT_LOW) {
   return 0;
  }
 
@@ -235,30 +237,31 @@ static void amd_sb8xx_gpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
  int i;
 
  for (i = 0; i < chip->ngpio; i++) {
-   int gpio = i + chip->base;
+  // int gpio = i + chip->base;
    u8 reg;
-   const char *label, *pull, *owner, *mux;
+   const char /* *label,*/ *pull, *owner, *mux;
 
    /* We report the GPIO even if it's not requested since
     * we're also reporting things like alternate
     * functions which apply even when the GPIO is not in
     * use as a GPIO.
     */
-   label = gpiochip_is_requested(chip, i);
-   if (!label) {
-     label = "Unrequested";
+   //label = gpiochip_is_requested(chip, i);
+    
+    //if (!label) {
+//     label = "Unrequested";
 
      /* Skip known gaps in the gpio range unless they were
       * explicitly requested.
-      */
-     if ((i > 67 && i < 96) ||
-         (i > 119 && i < 128) ||
-         (i > 150 && i < 160) ||
-         i > 228)
-       continue;
-   }
+//      */
+//     if ((i > 67 && i < 96) ||
+//         (i > 119 && i < 128) ||
+//         (i > 150 && i < 160) ||
+//         i > 228)
+//       continue;
+//   }
 
-   seq_printf(s, " gpio-%-3d(%d) (%-20.20s) ", gpio, i, label);
+ //  seq_printf(s, " gpio-%-3d(%d) (%-20.20s) ", gpio, i, label);
 
    reg = ioread8(agp->gpio + i);
 
@@ -465,7 +468,7 @@ static int __init amd_sb8xx_gpio_init(void)
 
  spin_lock_init(&gp.lock);
 
- ret = gpiochip_add(&gp.chip);
+ ret = gpiochip_add_data(&gp.chip, NULL);
  if (ret) {
    dev_err(gp.dev, "Registering gpiochip failed\n");
    goto err_release_iomux;
