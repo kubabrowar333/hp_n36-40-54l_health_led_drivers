@@ -42,7 +42,7 @@ if ! modprobe softpwm; then
   exit 1
 fi
 
-if ! BASE=$(cat "/sys/class/gpio/gpiochip256/base"); then
+if ! BASE=$(cat "/sys/class/gpio/gpiochip768/base"); then
   echo "Couldn't determine gpio pin base"
   exit 1
 fi
