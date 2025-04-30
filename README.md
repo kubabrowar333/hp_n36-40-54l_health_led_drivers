@@ -13,7 +13,7 @@ sudo apt-get install -qq fakeroot dkms
 sudo apt install linux-headers-$(uname -r)
 
 # Install the drivers
-git clone https://github.com/stupidpupil/hp_n36-40-54l_health_led_drivers.git
+git clone https://github.com/kubabrowar333/hp_n36-40-54l_health_led_drivers.git
 cd hp_n36-40-54l_health_led_drivers
 /bin/sh build_all_debs.sh
 sudo dpkg -i dist/*.deb
