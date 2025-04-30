@@ -157,7 +157,7 @@ static u8 piix4_port_sel_sb800;
 static u8 piix4_port_mask_sb800;
 static u8 piix4_port_shift_sb800;
 static const char *piix4_main_port_names_sb800[PIIX4_MAX_ADAPTERS] = {
-	" port 0", " port 2", " port 3", " port 4"
+	" port 0", " port 2", " port 3"
 };
 static const char *piix4_aux_port_name_sb800 = " port 1";
 
@@ -827,7 +827,7 @@ static int piix4_add_adapter(struct pci_dev *dev, unsigned short smba,
 	}
 
 	adap->owner = THIS_MODULE;
-	adap->class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
+	adap->class = I2C_CLASS_HWMON;
 	adap->algo = sb800_main ? &piix4_smbus_algorithm_sb800
 				: &smbus_algorithm;
 
