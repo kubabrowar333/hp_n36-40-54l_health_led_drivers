@@ -201,17 +201,28 @@ done:
 	return status ? : len;
 }
 
-/* Sysfs definitions for soft_pwm class */
-static struct class_attribute soft_pwm_class_attrs[] = {
-	__ATTR(export,   0200, NULL, export_store),
-	__ATTR(unexport, 0200, NULL, unexport_store),
-	__ATTR_NULL,
+static CLASS_ATTR_WO(export);
+static CLASS_ATTR_WO(unexport);
+
+static struct attribute *soft_pwm_attrs[] = {
+    &class_attr_export.attr,
+    &class_attr_unexport.attr,
+    NULL,
+};
+
+static const struct attribute_group soft_pwm_group = {
+    .attrs = soft_pwm_attrs,
+};
+
+static const struct attribute_group *soft_pwm_class_groups[] = {
+    &soft_pwm_group,
+    NULL,
 };
 
 static struct class soft_pwm_class = {
 	.name = "soft_pwm",
 	.owner = THIS_MODULE,
-	.class_attrs = soft_pwm_class_attrs,
+	.class_groups = soft_pwm_class_groups,
 };
 
 /* Setup the sysfs directory for a claimed PWM device */
@@ -308,7 +319,7 @@ enum hrtimer_restart soft_pwm_hrtimer_callback(struct hrtimer *timer) {
 		else if (desc->pulse >= desc->period)
 			desc->value = 1;
 		else {
-			if (desc->next_tick.tv64 <= now.tv64) {
+			if (ktime_to_ns(desc->next_tick) <= ktime_to_ns(now)) {
 				desc->value = 1 - desc->value;
 
 				desc->counter ++;
@@ -318,7 +329,7 @@ enum hrtimer_restart soft_pwm_hrtimer_callback(struct hrtimer *timer) {
 				if (desc->pulse == 0 ||
 					desc->pulse == desc->period ||
 					desc->pulses == 0) {
-					desc->next_tick.tv64 = KTIME_MAX;
+					desc->next_tick = ktime_set(KTIME_SEC_MAX, 0);
 				} else {
 					t = desc->value ?
 						desc->pulse :
@@ -327,9 +338,9 @@ enum hrtimer_restart soft_pwm_hrtimer_callback(struct hrtimer *timer) {
 						t * 1000);
 				}
 			}
-			if (next_tick.tv64 == 0 ||
-				desc->next_tick.tv64 < next_tick.tv64) {
-				next_tick.tv64 = desc->next_tick.tv64;
+			if (ktime_to_ns(next_tick) == 0 ||
+				ktime_compare(desc->next_tick, next_tick) < 0) {
+				next_tick = desc->next_tick;
 			}
 		}
 
@@ -340,7 +351,7 @@ next:
 		}
 	}
 
-	if (next_tick.tv64 > 0)
+	if (ktime_to_ns(next_tick) > 0)
 		hrtimer_start(&hr_timer, next_tick, HRTIMER_MODE_ABS);
 
 	return HRTIMER_NORESTART;
@@ -394,4 +405,3 @@ static void __exit soft_pwm_exit(void){
 
 module_init(soft_pwm_init);
 module_exit(soft_pwm_exit);
-
