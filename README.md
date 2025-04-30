@@ -1,3 +1,5 @@
+This is a fork with some changes in softpwm so now it works on debian 12 with OMV.
+
 # Health LED for HP Microservers N36L/N40L/N54L
 
 This repository contains 3 drivers intended for use in HP Microservers N36L/N40L/N54L to allow control of their 'Health LED'.
